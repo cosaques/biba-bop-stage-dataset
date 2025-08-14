@@ -276,22 +276,33 @@ def show_category_examples():
             "Torse": ["fin", "moyen", "large"],
             "Cuisses": ["fines", "moyennes", "larges"]
         }
+
+        for cat_name, types in categories.items():
+            with st.expander(f"Catégorie {cat_name}"):
+                cols = st.columns(len(types))
+                for i, typ in enumerate(types):
+                    img_path = os.path.join(IMAGES_DIR, f"{cat_name.lower()}_{typ}.jpg")
+                    try:
+                        img = Image.open(img_path)
+                        cols[i].image(img, caption=f"{cat_name} {typ}", width=150)
+                    except:
+                        cols[i].warning(f"Image non trouvée: {img_path}")
     else:
         categories = {
             "Ventre": ["plat", "moyen", "rond"],
             "Bassin": ["etroit", "moyen", "large"]
         }
     
-    for cat_name, types in categories.items():
-        with st.expander(f"Catégorie {cat_name}"):
-            cols = st.columns(len(types))
-            for i, typ in enumerate(types):
-                img_path = os.path.join(IMAGES_DIR, "categories", f"{cat_name.lower()}_{typ}.jpg")
-                try:
-                    img = Image.open(img_path)
-                    cols[i].image(img, caption=f"{cat_name} {typ}", width=150)
-                except:
-                    cols[i].warning(f"Image non trouvée: {img_path}")
+        for cat_name, types in categories.items():
+            with st.expander(f"Catégorie {cat_name}"):
+                cols = st.columns(len(types))
+                for i, typ in enumerate(types):
+                    img_path = os.path.join(IMAGES_DIR, "categories", f"{cat_name.lower()}_{typ}.jpg")
+                    try:
+                        img = Image.open(img_path)
+                        cols[i].image(img, caption=f"{cat_name} {typ}", width=150)
+                    except:
+                        cols[i].warning(f"Image non trouvée: {img_path}")
 
 # =======================
 # Interface Streamlit
@@ -319,18 +330,52 @@ with st.form("prediction_form"):
     st.header("🔢 Entrez vos informations")
     
     taille = st.number_input("Taille (cm)", 150, 210, 175)
-    poids = st.number_input("Poids (kg)", 40, 200, 70)
+    weight = st.number_input("Poids (kg)", 40, 200, 70)
     age = st.number_input("Âge", 15, 90, 30)
     
     if sexe == "Homme":
-        categorie_ventre = st.selectbox("Catégorie ventre", ["Plat", "Moyen", "Rond"])
-        categorie_torse = st.selectbox("Catégorie torse", ["Fin", "Moyen", "Large"])
-        categorie_cuisses = st.selectbox("Catégorie cuisses", ["Fines", "Moyennes", "Larges"])
-    else:
-        categorie_ventre = st.selectbox("Catégorie ventre", ["Plat", "Moyen", "Rond"])
-        categorie_bassin = st.selectbox("Catégorie bassin", ["Étroit", "Moyen", "Large"])
-        taille_soutien_gorge = st.number_input("Taille soutien-gorge", 60, 120, 80)
-        bonnet = st.selectbox("Bonnet", ["A", "B", "C", "D", "E"])
+        categorie_ventre = st.selectbox(
+        "Catégorie ventre [?]", 
+        ["Plat", "Moyen", "Rond"],
+        help="Voir les exemples visuels ci-dessus"
+        )
+        categorie_torse = st.selectbox(
+        "Catégorie torse [?]", 
+        ["Fin", "Moyen", "Large"],
+        help="Voir les exemples visuels ci-dessus"
+        )
+        categorie_cuisses = st.selectbox(
+        "Catégorie cuisses [?]", 
+        ["Fines", "Moyennes", "Larges"],
+        help="Voir les exemples visuels ci-dessus"
+        )
+
+        
+
+
+    else:  # Femme
+        categorie_ventre = st.selectbox(
+        "Catégorie ventre [?]", 
+        ["Plat", "Moyen", "Rond"],
+        help="Voir les exemples visuels ci-dessus"
+        )
+        categorie_bassin = st.selectbox(
+            "Catégorie bassin [?]", 
+            ["Etroit", "Moyen", "Large"],
+            help="Voir les exemples visuels ci-dessus"
+        )
+        taille_soutien_gorge = st.number_input(
+            "Taille soutien-gorge [?]", 
+            min_value=60, max_value=120, step=1,
+            help="Tour de poitrine en cm"
+        )
+        bonnet_rang = st.number_input(
+            "Rang du bonnet [?]", 
+            min_value=0, max_value=11, step=1,
+            help="0 = A, 1 = B, ..., 11 = L"
+        )
+
+        
 
     submitted = st.form_submit_button("✨ Prédire la silhouette")
 
@@ -340,7 +385,7 @@ if submitted:
     if sexe == "Homme":
         input_data = {
             "taille": taille,
-            "weight": poids,
+            "weight": weight,
             "age": age,
             "categorie_ventre": categorie_ventre.lower(),
             "categorie_torse": categorie_torse.lower(),
@@ -349,12 +394,12 @@ if submitted:
     else:
         input_data = {
             "taille": taille,
-            "weight": poids,
+            "weight": weight,
             "age": age,
             "categorie_ventre": categorie_ventre.lower(),
             "categorie_bassin": categorie_bassin.lower(),
             "taille_soutien_gorge": taille_soutien_gorge,
-            "bonnet": bonnet
+            "bonnet_rang": bonnet_rang
         }
     
     # Prédiction
