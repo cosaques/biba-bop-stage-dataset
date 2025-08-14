@@ -1,9 +1,11 @@
 streamlit==1.35.0
 pandas==2.2.2
 numpy==1.26.4
-scikit-learn==1.4.2
 joblib==1.4.2
 matplotlib==3.8.4
 plotly==5.22.0
 Pillow==10.3.0
 ipywidgets==8.1.2
+scipy==1.11.4
+threadpoolctl==3.5.0
+scikit-learn==1.6.1
