@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Polygon
 from wrapper import MultiTPOTWrapper
 from PIL import Image
-from streamlit.components.v1 import html
 
 # =======================
 # Configuration des chemins
@@ -134,8 +133,8 @@ def draw_body_2d(
 # =======================
 # Fonctions d'aide visuelle
 # =======================
-def show_measure_help(measure_name):
-    """Affiche l'image d'aide pour une mesure spécifique"""
+def show_measure_details(measure_name, value):
+    """Affiche le détail d'une mesure avec image dans un expander"""
     image_mapping = {
         "hauteur_d_entrejambe": "entrejambe.jpg",
         "hauteur_de_la_taille": "taille.jpg",
@@ -157,194 +156,217 @@ def show_measure_help(measure_name):
         "tour_de_sous_poitrine": "tour_de_sous_poitrine.jpg",
         "tour_de_taille": "tour_de_taille.jpg",
         "tour_du_cou": "tour_du_cou.jpg"
-
     }
-
-    modal_script = f"""
-    <script>
-    // Créer la modale
-    var modal = document.createElement('div');
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-    modal.style.display = 'flex';
-    modal.style.justifyContent = 'center';
-    modal.style.alignItems = 'center';
-    modal.style.zIndex = '1000';
     
-    // Contenu de la modale
-    modal.innerHTML = `
-        <div style="background: white; padding: 20px; border-radius: 10px; max-width: 80%; max-height: 80%; overflow: auto;">
-            <img src="{img_path}" style="max-width: 100%; height: auto;" />
-            <button onclick="this.parentElement.parentElement.remove()" style="display: block; margin: 10px auto;">Fermer</button>
-        </div>
-    `;
+    measure_descriptions = {
+        "hauteur_de_la_taille": {
+            "description": "Distance du sol jusqu'au tour de taille naturel.",
+            "method": "Mesurer debout, pieds joints, depuis le sol jusqu'au point le plus fin du torse."
+        },
+        "hauteur_d_entrejambe": {
+            "description": "Distance du sol à l'entrejambe.",
+            "method": "Mesurer debout, pieds joints, depuis le sol jusqu'à l'entrejambe."
+        },
+        "hauteur_de_poitrine": {
+            "description": "Distance du sol jusqu'à la pointe de la poitrine.",
+            "method": "Mesurer debout, pieds joints, depuis le sol jusqu'à la pointe du sein (ou pectoraux)."
+        },
+        "hauteur_des_epaules": {
+            "description": "Distance du sol jusqu'au sommet des épaules.",
+            "method": "Mesurer debout, pieds joints, depuis le sol jusqu'au point le plus haut de l'épaule."
+        },
+        "hauteur_des_genoux": {
+            "description": "Distance du sol jusqu'au centre de la rotule.",
+            "method": "Mesurer debout, depuis le sol jusqu'au centre du genou."
+        },
+        "hauteur_des_hanches": {
+            "description": "Distance du sol jusqu'à la partie la plus large des hanches.",
+            "method": "Mesurer debout, pieds joints, depuis le sol jusqu'à la partie la plus large du bassin."
+        },
+        "largeur_d_epaule": {
+            "description": "Largeur d'une épaule à l'autre.",
+            "method": "Mesurer horizontalement d'une extrémité d'épaule à l'autre."
+        },
+        "largeur_de_mamelon_a_mamelon": {
+            "description": "Distance entre les deux mamelons.",
+            "method": "Mesurer horizontalement entre les pointes des seins."
+        },
+        "largeur_des_epaules_a_l_horizontales": {
+            "description": "Largeur des épaules à l'horizontale.",
+            "method": "Mesurer d'une épaule à l'autre, bras relâchés."
+        },
+        "longueur_d_avant_bras": {
+            "description": "Longueur de l'avant-bras.",
+            "method": "Mesurer du coude au poignet, bras plié à 90°."
+        },
+        "longueur_de_la_colonne_vertebrale_jusqu_au_poignet": {
+            "description": "Longueur de la colonne vertébrale jusqu'au poignet.",
+            "method": "Mesurer du bas du cou (vertèbre C7) jusqu'au poignet, bras le long du corps."
+        },
+        "longueur_du_bras": {
+            "description": "Longueur totale du bras.",
+            "method": "Mesurer de l'épaule au poignet, bras tendu le long du corps."
+        },
+        "taille_de_poitrine": {
+            "description": "Tour de poitrine au niveau du mamelon.",
+            "method": "Mesurer horizontalement autour de la poitrine, sur la pointe des seins."
+        },
+        "tour_de_cheville": {
+            "description": "Tour de la cheville.",
+            "method": "Mesurer autour de la partie la plus fine de la cheville."
+        },
+        "tour_de_cuisse": {
+            "description": "Tour de la cuisse.",
+            "method": "Mesurer autour de la partie la plus large de la cuisse."
+        },
+        "tour_de_hanches": {
+            "description": "Tour de hanches.",
+            "method": "Mesurer autour de la partie la plus large du bassin/fesses."
+        },
+        "tour_de_poitrine": {
+            "description": "Tour de poitrine.",
+            "method": "Mesurer horizontalement autour de la poitrine, sur la pointe des seins."
+        },
+        "tour_de_sous_poitrine": {
+            "description": "Tour sous-poitrine.",
+            "method": "Mesurer juste sous la poitrine, horizontalement."
+        },
+        "tour_de_taille": {
+            "description": "Tour de taille.",
+            "method": "Mesurer autour du point le plus fin du torse, généralement au-dessus du nombril."
+        },
+        "tour_du_cou": {
+            "description": "Tour du cou.",
+            "method": "Mesurer autour de la base du cou."
+        }
+    }
     
-    document.body.appendChild(modal);
-    </script>
-    """
-    
-    html(modal_script)
-    
-    default_img = "default.jpg"
-    img_path = os.path.join(IMAGES_DIR, image_mapping.get(measure_name, default_img))
-    
-    try:
-        img = Image.open(img_path)
-        st.image(img, caption=f"Mesure: {measure_name}", use_column_width=True)
-    except:
-        st.warning(f"Image d'aide non trouvée pour {measure_name}")
+    with st.expander(f"📏 {measure_name.replace('_', ' ').title()} : {value:.1f} cm", expanded=False):
+        col1, col2 = st.columns([1, 2])
+        
+        # Colonne image
+        with col1:
+            img_path = os.path.join(IMAGES_DIR, image_mapping.get(measure_name, "default.jpg"))
+            try:
+                st.image(img_path, use_container_width=True)
+            except:
+                st.warning("Image non disponible")
+        
+        # Colonne description
+        with col2:
+            desc = measure_descriptions.get(measure_name, {
+                "description": "Description non disponible",
+                "method": "Méthode de mesure non spécifiée"
+            })
+            st.markdown(f"""
+            **Description**  
+            {desc['description']}
+            
+            **Méthode de mesure**  
+            {desc['method']}
+            """)
 
 def show_category_examples():
     """Affiche les exemples visuels pour les catégories"""
     st.subheader("📸 Exemples visuels des catégories")
     
     if sexe == "Homme":
-        cols = st.columns(3)
         categories = {
             "Ventre": ["plat", "moyen", "rond"],
             "Torse": ["fin", "moyen", "large"],
             "Cuisses": ["fines", "moyennes", "larges"]
         }
-        
-        for cat_name, types in categories.items():
-            with st.expander(f"Catégorie {cat_name}"):
-                cols = st.columns(len(types))
-                for i, typ in enumerate(types):
-                    img_path = os.path.join(IMAGES_DIR, f"{cat_name.lower()}_{typ}.jpg")
-                    try:
-                        img = Image.open(img_path)
-                        cols[i].image(img, caption=f"{cat_name} {typ}", width=150)
-                    except:
-                        cols[i].warning(f"Image non trouvée: {img_path}")
-
-
-
     else:
-        cols = st.columns(3)
         categories = {
             "Ventre": ["plat", "moyen", "rond"],
-            "Bassin": ["etroit", "moyen", "large"],
+            "Bassin": ["etroit", "moyen", "large"]
         }
-        
-        for cat_name, types in categories.items():
-            with st.expander(f"Catégorie {cat_name}"):
-                cols = st.columns(len(types))
-                for i, typ in enumerate(types):
-                    img_path = os.path.join(IMAGES_DIR, f"{cat_name.lower()}_{typ}.jpg")
-                    try:
-                        img = Image.open(img_path)
-                        cols[i].image(img, caption=f"{cat_name} {typ}", width=150)
-                    except:
-                        cols[i].warning(f"Image non trouvée: {img_path}")
+    
+    for cat_name, types in categories.items():
+        with st.expander(f"Catégorie {cat_name}"):
+            cols = st.columns(len(types))
+            for i, typ in enumerate(types):
+                img_path = os.path.join(IMAGES_DIR, "categories", f"{cat_name.lower()}_{typ}.jpg")
+                try:
+                    img = Image.open(img_path)
+                    cols[i].image(img, caption=f"{cat_name} {typ}", width=150)
+                except:
+                    cols[i].warning(f"Image non trouvée: {img_path}")
 
 # =======================
 # Interface Streamlit
 # =======================
-st.title("📏 Silhouette predictor (MVP)")
+st.title("📏 Prédiction de Silhouette")
 
-# 🎯 Sexe
+# 1. Sélection du sexe
 sexe = st.radio("Sexe :", ["Homme", "Femme"])
 
-# 📂 Choix du dossier modèles
+# 2. Chargement des modèles
 if sexe == "Homme":
     dossier_pipelines = "pipelines_all_dataset"
 else:
     dossier_pipelines = "pipelines_female_complets"
 
-# 📦 Chargement
 models = load_all_models(dossier_pipelines)
 target_names = get_target_names(dossier_pipelines)
 wrapper = MultiTPOTWrapper(models)
 
-# ℹ️ Aide visuelle pour les catégories
+# 3. Aide visuelle pour les catégories
 show_category_examples()
 
-# 📋 Formulaire
-st.header("🔢 Entrez vos informations")
-
-taille = st.number_input("Taille (cm)", 150.0, 210.0, 175.0, step=0.5)
-weight = st.number_input("Poids (kg)", 40.0, 200.0, 80.0, step=0.5)
-age = st.number_input("Âge", 15, 90, 35, step=1)
-
-if sexe == "Homme":
-    categorie_ventre = st.selectbox(
-        "Catégorie ventre [?]", 
-        ["Plat", "Moyen", "Rond"],
-        help="Voir les exemples visuels ci-dessus"
-    )
-    categorie_torse = st.selectbox(
-        "Catégorie torse [?]", 
-        ["Fin", "Moyen", "Large"],
-        help="Voir les exemples visuels ci-dessus"
-    )
-    categorie_cuisses = st.selectbox(
-        "Catégorie cuisses [?]", 
-        ["Fines", "Moyennes", "Larges"],
-        help="Voir les exemples visuels ci-dessus"
-    )
-
-    input_data = pd.DataFrame([{
-        "taille": taille,
-        "age": age,
-        "weight": weight,
-        "categorie_ventre": categorie_ventre.lower(),
-        "categorie_torse": categorie_torse.lower(),
-        "categorie_cuisses": categorie_cuisses.lower()
-    }])
-
-else:  # Femme
-    categorie_ventre = st.selectbox(
-        "Catégorie ventre [?]", 
-        ["Plat", "Moyen", "Rond"],
-        help="Voir les exemples visuels ci-dessus"
-    )
-    categorie_bassin = st.selectbox(
-        "Catégorie bassin [?]", 
-        ["Etroit", "Moyen", "Large"],
-        help="Voir les exemples visuels ci-dessus"
-    )
-    taille_soutien_gorge = st.number_input(
-        "Taille soutien-gorge [?]", 
-        min_value=60, max_value=125, step=1,
-        help="Tour de poitrine en cm"
-    )
-    bonnet_rang = st.number_input(
-        "Rang du bonnet [?]", 
-        min_value=0, max_value=11, step=1,
-        help="0 = A, 1 = B, ..., 11 = L"
-    )
-
-    input_data = pd.DataFrame([{
-        "taille": taille,
-        "age": age,
-        "weight": weight,
-        "categorie_ventre": categorie_ventre.lower(),
-        "categorie_bassin": categorie_bassin.lower(),
-        "taille_soutien_gorge": taille_soutien_gorge,
-        "bonnet_rang": bonnet_rang
-    }])
-
-# 🎯 Bouton prédiction
-if st.button("✨ Prédire la silhouette"):
-    preds = wrapper.predict(input_data)
-    predictions_dict = dict(zip(target_names, preds[0]))
-
-    st.header("📊 Résultats de prédiction")
+# 4. Formulaire de saisie
+with st.form("prediction_form"):
+    st.header("🔢 Entrez vos informations")
     
-    # Affichage des mesures avec aide
-    for measure_name, value in predictions_dict.items():
-        cols = st.columns([0.8, 0.2])
-        with cols[0]:
-            st.metric(label=measure_name.replace("_", " ").title(), value=f"{value:.1f} cm")
-        with cols[1]:
-            if st.button("❓", key=f"help_{measure_name}"):
-                show_measure_help(measure_name)
+    taille = st.number_input("Taille (cm)", 150, 210, 175)
+    poids = st.number_input("Poids (kg)", 40, 200, 70)
+    age = st.number_input("Âge", 15, 90, 30)
+    
+    if sexe == "Homme":
+        categorie_ventre = st.selectbox("Catégorie ventre", ["Plat", "Moyen", "Rond"])
+        categorie_torse = st.selectbox("Catégorie torse", ["Fin", "Moyen", "Large"])
+        categorie_cuisses = st.selectbox("Catégorie cuisses", ["Fines", "Moyennes", "Larges"])
+    else:
+        categorie_ventre = st.selectbox("Catégorie ventre", ["Plat", "Moyen", "Rond"])
+        categorie_bassin = st.selectbox("Catégorie bassin", ["Étroit", "Moyen", "Large"])
+        taille_soutien_gorge = st.number_input("Taille soutien-gorge", 60, 120, 80)
+        bonnet = st.selectbox("Bonnet", ["A", "B", "C", "D", "E"])
 
-    # 🖼️ Dessin silhouette
+    submitted = st.form_submit_button("✨ Prédire la silhouette")
+
+# 5. Affichage des résultats
+if submitted:
+    # Préparation des données
+    if sexe == "Homme":
+        input_data = {
+            "taille": taille,
+            "weight": poids,
+            "age": age,
+            "categorie_ventre": categorie_ventre.lower(),
+            "categorie_torse": categorie_torse.lower(),
+            "categorie_cuisses": categorie_cuisses.lower()
+        }
+    else:
+        input_data = {
+            "taille": taille,
+            "weight": poids,
+            "age": age,
+            "categorie_ventre": categorie_ventre.lower(),
+            "categorie_bassin": categorie_bassin.lower(),
+            "taille_soutien_gorge": taille_soutien_gorge,
+            "bonnet": bonnet
+        }
+    
+    # Prédiction
+    preds = wrapper.predict(pd.DataFrame([input_data]))
+    predictions_dict = dict(zip(target_names, preds[0]))
+    
+    # Affichage des résultats
+    st.header("📊 Résultats de prédiction")
+    for measure_name, value in predictions_dict.items():
+        show_measure_details(measure_name, value)
+    
+    # Visualisation de la silhouette
     st.header("🎨 Visualisation de votre silhouette")
     fig = draw_body_2d(
         taille=taille,
@@ -366,4 +388,4 @@ if st.button("✨ Prédire la silhouette"):
 
 # Pied de page
 st.markdown("---")
-st.markdown("ℹ️ Cliquez sur les icônes ❓ pour voir des explications visuelles des mesures")
+st.markdown("ℹ️ Développé avec Streamlit par BiBa Bop - © 2025")
