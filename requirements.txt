@@ -9,3 +9,8 @@ ipywidgets==8.1.2
 scipy==1.11.4
 threadpoolctl==3.5.0
 scikit-learn==1.6.1
+TPOT==1.1.0
+stopit==1.1.2
+update-checker==0.18.0
+tqdm==4.67.1
+xgboost==3.0.2
