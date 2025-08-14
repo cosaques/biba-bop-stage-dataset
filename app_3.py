@@ -114,6 +114,7 @@ if st.button("Prédire"):
         betas = torch.cat([predicted_betas, pad]).unsqueeze(0)
     else:
         betas = predicted_betas[:smpl_model.num_betas].unsqueeze(0)
+        
     
     # Générer vertices
     with torch.no_grad():
