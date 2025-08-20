@@ -157,7 +157,7 @@ def show_measure_details(measure_name, value):
         "tour_de_taille": "tour_de_taille.jpg",
         "tour_du_cou": "tour_du_cou.jpg"
     }
-    
+
     measure_descriptions = {
         "hauteur_de_la_taille": {
             "description": "Distance du sol jusqu'au tour de taille naturel.",
@@ -240,18 +240,19 @@ def show_measure_details(measure_name, value):
             "method": "Mesurer autour de la base du cou."
         }
     }
-    
+
     with st.expander(f"📏 {measure_name.replace('_', ' ').title()} : {value:.1f} cm", expanded=False):
         col1, col2 = st.columns([1, 2])
-        
+
         # Colonne image
         with col1:
             img_path = os.path.join(IMAGES_DIR, image_mapping.get(measure_name, "default.jpg"))
             try:
-                st.image(img_path, use_container_width=True)
-            except:
-                st.warning("Image non disponible")
-        
+                img = Image.open(img_path)
+                st.image(img, width=160)
+            except Exception as e:
+                st.warning(e)
+
         # Colonne description
         with col2:
             desc = measure_descriptions.get(measure_name, {
@@ -259,17 +260,17 @@ def show_measure_details(measure_name, value):
                 "method": "Méthode de mesure non spécifiée"
             })
             st.markdown(f"""
-            **Description**  
+            **Description**
             {desc['description']}
-            
-            **Méthode de mesure**  
+
+            **Méthode de mesure**
             {desc['method']}
             """)
 
 def show_category_examples():
     """Affiche les exemples visuels pour les catégories"""
     st.subheader("📸 Exemples visuels des catégories")
-    
+
     if sexe == "Homme":
         categories = {
             "Ventre": ["plat", "moyen", "rond"],
@@ -292,7 +293,7 @@ def show_category_examples():
             "Ventre": ["plat", "moyen", "rond"],
             "Bassin": ["etroit", "moyen", "large"]
         }
-    
+
         for cat_name, types in categories.items():
             with st.expander(f"Catégorie {cat_name}"):
                 cols = st.columns(len(types))
@@ -328,54 +329,54 @@ show_category_examples()
 # 4. Formulaire de saisie
 with st.form("prediction_form"):
     st.header("🔢 Entrez vos informations")
-    
+
     taille = st.number_input("Taille (cm)", 150, 210, 175)
     weight = st.number_input("Poids (kg)", 40, 200, 70)
     age = st.number_input("Âge", 15, 90, 30)
-    
+
     if sexe == "Homme":
         categorie_ventre = st.selectbox(
-        "Catégorie ventre [?]", 
+        "Catégorie ventre [?]",
         ["Plat", "Moyen", "Rond"],
         help="Voir les exemples visuels ci-dessus"
         )
         categorie_torse = st.selectbox(
-        "Catégorie torse [?]", 
+        "Catégorie torse [?]",
         ["Fin", "Moyen", "Large"],
         help="Voir les exemples visuels ci-dessus"
         )
         categorie_cuisses = st.selectbox(
-        "Catégorie cuisses [?]", 
+        "Catégorie cuisses [?]",
         ["Fines", "Moyennes", "Larges"],
         help="Voir les exemples visuels ci-dessus"
         )
 
-        
+
 
 
     else:  # Femme
         categorie_ventre = st.selectbox(
-        "Catégorie ventre [?]", 
+        "Catégorie ventre [?]",
         ["Plat", "Moyen", "Rond"],
         help="Voir les exemples visuels ci-dessus"
         )
         categorie_bassin = st.selectbox(
-            "Catégorie bassin [?]", 
+            "Catégorie bassin [?]",
             ["Etroit", "Moyen", "Large"],
             help="Voir les exemples visuels ci-dessus"
         )
         taille_soutien_gorge = st.number_input(
-            "Taille soutien-gorge [?]", 
+            "Taille soutien-gorge [?]",
             min_value=60, max_value=120, step=1,
             help="Tour de poitrine en cm"
         )
         bonnet_rang = st.number_input(
-            "Rang du bonnet [?]", 
+            "Rang du bonnet [?]",
             min_value=0, max_value=11, step=1,
             help="0 = A, 1 = B, ..., 11 = L"
         )
 
-        
+
 
     submitted = st.form_submit_button("✨ Prédire la silhouette")
 
@@ -401,16 +402,16 @@ if submitted:
             "taille_soutien_gorge": taille_soutien_gorge,
             "bonnet_rang": bonnet_rang
         }
-    
+
     # Prédiction
     preds = wrapper.predict(pd.DataFrame([input_data]))
     predictions_dict = dict(zip(target_names, preds[0]))
-    
+
     # Affichage des résultats
     st.header("📊 Résultats de prédiction")
     for measure_name, value in predictions_dict.items():
         show_measure_details(measure_name, value)
-    
+
     # Visualisation de la silhouette
     st.header("🎨 Visualisation de votre silhouette")
     fig = draw_body_2d(
